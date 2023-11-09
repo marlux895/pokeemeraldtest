@@ -87,8 +87,14 @@ static const struct ScanlineEffectParams sConditionGraphScanline =
 
 static const u8 sConditionToLineLength[MAX_IV_MASK + 1] =
 {
-     4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20,
-    21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 34, 35
+     5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 32, 33, 33, 34
+};
+
+static const u8 sHPToLineLength[MAX_IV_MASK + 1] =
+{
+     5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 30, 31, 31, 32, 32, 33
 };
 
 static const struct WindowTemplate sMoveRelearnerWindowTemplates[] =
@@ -574,10 +580,11 @@ static void ConditionGraph_CalcRightHalf(struct ConditionGraph *graph)
     // No need for conditional, positions on the Beauty line are always above the Cute line
     ConditionGraph_CalcLine(graph, graph->scanlineRight[0], &graph->curPositions[GRAPH_BEAUTY], &graph->curPositions[GRAPH_CUTE], TRUE, NULL);
 
-    // Calculate Cute -> Smart line (includes left scanline because this crosses the halfway point)
-    i = (graph->curPositions[GRAPH_CUTE].y <= graph->curPositions[GRAPH_SMART].y);
-    ConditionGraph_CalcLine(graph, graph->scanlineRight[0], &graph->curPositions[GRAPH_CUTE], &graph->curPositions[GRAPH_SMART], i, graph->scanlineLeft[0]);
+    // Calculate Cute -> Speed line
+    i = (graph->curPositions[GRAPH_CUTE].y <= graph->curPositions[GRAPH_SPEED].y);
 
+    ConditionGraph_CalcLine(graph, graph->scanlineRight[0], &graph->curPositions[GRAPH_CUTE], &graph->curPositions[GRAPH_SPEED], i, graph->scanlineLeft[0]);
+ 
     // Clear down to new top
     for (i = CONDITION_GRAPH_TOP_Y; i < y; i++)
     {
@@ -589,7 +596,7 @@ static void ConditionGraph_CalcRightHalf(struct ConditionGraph *graph)
         graph->scanlineRight[i - CONDITION_GRAPH_TOP_Y][0] = CONDITION_GRAPH_CENTER_X;
 
     // Clear after new bottom
-    bottom = max(graph->bottom, graph->curPositions[GRAPH_CUTE].y);
+    bottom = graph->curPositions[GRAPH_SPEED].y;
     for (i = bottom + 1; i <= CONDITION_GRAPH_BOTTOM_Y; i++)
     {
         graph->scanlineRight[i - CONDITION_GRAPH_TOP_Y][0] = 0;
@@ -624,6 +631,11 @@ static void ConditionGraph_CalcLeftHalf(struct ConditionGraph *graph)
     // No need for conditional, positions on the Tough line are always above the Smart line
     ConditionGraph_CalcLine(graph, graph->scanlineLeft[0], &graph->curPositions[GRAPH_TOUGH], &graph->curPositions[GRAPH_SMART], FALSE, NULL);
 
+    // Calculate Smart -> Speed line
+    i = (graph->curPositions[GRAPH_SMART].y > graph->curPositions[GRAPH_SPEED].y);
+
+    ConditionGraph_CalcLine(graph, graph->scanlineLeft[0], &graph->curPositions[GRAPH_SMART], &graph->curPositions[GRAPH_SPEED], i, NULL);
+
     // Clear down to new top
     for (i = CONDITION_GRAPH_TOP_Y; i < y; i++)
     {
@@ -635,7 +647,7 @@ static void ConditionGraph_CalcLeftHalf(struct ConditionGraph *graph)
         graph->scanlineLeft[i - CONDITION_GRAPH_TOP_Y][1] = CONDITION_GRAPH_CENTER_X;
 
     // Clear after new bottom
-    bottom = max(graph->bottom, graph->curPositions[GRAPH_SMART].y + 1);
+    bottom = graph->curPositions[GRAPH_SPEED].y;
     for (i = bottom; i <= CONDITION_GRAPH_BOTTOM_Y; i++)
     {
         graph->scanlineLeft[i - CONDITION_GRAPH_TOP_Y][0] = 0;
@@ -654,32 +666,37 @@ static void ConditionGraph_CalcLeftHalf(struct ConditionGraph *graph)
 
 void ConditionGraph_CalcPositions(u8 *conditions, struct UCoords16 *positions)
 {
-    u8 lineLength, sinIdx;
+    u8 lineLength, HPlineLength, sinIdx;
     s8 posIdx;
     u16 i;
 
     // Cool is straight up-and-down (not angled), so no need for Sin
-    lineLength = sConditionToLineLength[*(conditions++)];
+    HPlineLength = sHPToLineLength[*(conditions++)];
     positions[GRAPH_COOL].x = CONDITION_GRAPH_CENTER_X;
-    positions[GRAPH_COOL].y = CONDITION_GRAPH_CENTER_Y - lineLength;
+    positions[GRAPH_COOL].y = CONDITION_GRAPH_CENTER_Y - HPlineLength;
 
-    sinIdx = 64;
+    // Speed is the same.
+    lineLength = sConditionToLineLength[*(conditions++)];
+    positions[GRAPH_SPEED].x = CONDITION_GRAPH_CENTER_X;
+    positions[GRAPH_SPEED].y = CONDITION_GRAPH_CENTER_Y + lineLength;
+
+    
+    sinIdx = 65;
     posIdx = GRAPH_COOL;
-    for (i = 1; i < CONDITION_COUNT; i++)
+    for (i = 1; i < 5; i++)
     {
-        sinIdx += 51;
+        sinIdx += 42;
         if (--posIdx < 0)
             posIdx = CONDITION_COUNT - 1;
 
-        if (posIdx == GRAPH_CUTE)
-            sinIdx++;
+        if (posIdx == GRAPH_SPEED)
+            posIdx--;
+            sinIdx += 2;
 
         lineLength = sConditionToLineLength[*(conditions++)];
         positions[posIdx].x = CONDITION_GRAPH_CENTER_X + ((lineLength * gSineTable[64 + sinIdx]) >> 8);
         positions[posIdx].y = CONDITION_GRAPH_CENTER_Y - ((lineLength * gSineTable[sinIdx]) >> 8);
 
-        if (posIdx <= GRAPH_CUTE && (lineLength != 32 || posIdx != GRAPH_CUTE))
-            positions[posIdx].x++;
     }
 }
 
@@ -1033,6 +1050,7 @@ void GetConditionMenuMonConditions(struct ConditionGraph *graph, u8 *numSparkles
         graph->conditions[id][CONDITION_COOL] = GetBoxOrPartyMonData(boxId, monId, MON_DATA_HP_IV, NULL);
         graph->conditions[id][CONDITION_TOUGH] = GetBoxOrPartyMonData(boxId, monId, MON_DATA_SPATK_IV, NULL);
         graph->conditions[id][CONDITION_SMART] = GetBoxOrPartyMonData(boxId, monId, MON_DATA_SPDEF_IV, NULL);
+        graph->conditions[id][CONDITION_SPEED] = GetBoxOrPartyMonData(boxId, monId, MON_DATA_SPEED_IV, NULL);
         graph->conditions[id][CONDITION_CUTE] = GetBoxOrPartyMonData(boxId, monId, MON_DATA_DEF_IV, NULL);
         graph->conditions[id][CONDITION_BEAUTY] = GetBoxOrPartyMonData(boxId, monId, MON_DATA_ATK_IV, NULL);
 
