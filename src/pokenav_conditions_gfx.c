@@ -227,6 +227,10 @@ static u32 LoopedTask_OpenConditionGraphMenu(s32 state)
 
         CopyBgTilemapBufferToVram(3);
         CopyPaletteIntoBufferUnfaded(gPokenavCondition_Pal, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
+        // Load copy and edit colors (the colors are in 15-bit)
+        CopyPaletteIntoBufferUnfaded(gPokenavCondition_Pal, BG_PLTT_ID(4), PLTT_SIZE_4BPP);
+        gPlttBufferUnfaded[4*16+12] = 0x730e;
+        gPlttBufferUnfaded[4*16+13] = 0x7ffc;
         CopyPaletteIntoBufferUnfaded(gConditionText_Pal, BG_PLTT_ID(15), PLTT_SIZE_4BPP);
         menu->monTransitionX = -80;
         return LT_INC_AND_PAUSE;

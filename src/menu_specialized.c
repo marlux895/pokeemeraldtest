@@ -596,7 +596,7 @@ static void ConditionGraph_CalcRightHalf(struct ConditionGraph *graph)
         graph->scanlineRight[i - CONDITION_GRAPH_TOP_Y][0] = CONDITION_GRAPH_CENTER_X;
 
     // Clear after new bottom
-    bottom = graph->curPositions[GRAPH_SPEED].y;
+    bottom = max(graph->curPositions[GRAPH_SPEED].y, graph->curPositions[GRAPH_CUTE].y);
     for (i = bottom + 1; i <= CONDITION_GRAPH_BOTTOM_Y; i++)
     {
         graph->scanlineRight[i - CONDITION_GRAPH_TOP_Y][0] = 0;
@@ -647,7 +647,7 @@ static void ConditionGraph_CalcLeftHalf(struct ConditionGraph *graph)
         graph->scanlineLeft[i - CONDITION_GRAPH_TOP_Y][1] = CONDITION_GRAPH_CENTER_X;
 
     // Clear after new bottom
-    bottom = graph->curPositions[GRAPH_SPEED].y;
+    bottom = max(graph->curPositions[GRAPH_SPEED].y, graph->curPositions[GRAPH_SMART].y);
     for (i = bottom; i <= CONDITION_GRAPH_BOTTOM_Y; i++)
     {
         graph->scanlineLeft[i - CONDITION_GRAPH_TOP_Y][0] = 0;
@@ -675,28 +675,38 @@ void ConditionGraph_CalcPositions(u8 *conditions, struct UCoords16 *positions)
     positions[GRAPH_COOL].x = CONDITION_GRAPH_CENTER_X;
     positions[GRAPH_COOL].y = CONDITION_GRAPH_CENTER_Y - HPlineLength;
 
-    // Speed is the same.
-    lineLength = sConditionToLineLength[*(conditions++)];
-    positions[GRAPH_SPEED].x = CONDITION_GRAPH_CENTER_X;
-    positions[GRAPH_SPEED].y = CONDITION_GRAPH_CENTER_Y + lineLength;
-
-    
     sinIdx = 65;
     posIdx = GRAPH_COOL;
-    for (i = 1; i < 5; i++)
+    for (i = 1; i < CONDITION_COUNT; i++)
     {
         sinIdx += 42;
         if (--posIdx < 0)
             posIdx = CONDITION_COUNT - 1;
 
-        if (posIdx == GRAPH_SPEED)
-            posIdx--;
+        if (posIdx == GRAPH_CUTE)
             sinIdx += 2;
 
         lineLength = sConditionToLineLength[*(conditions++)];
         positions[posIdx].x = CONDITION_GRAPH_CENTER_X + ((lineLength * gSineTable[64 + sinIdx]) >> 8);
         positions[posIdx].y = CONDITION_GRAPH_CENTER_Y - ((lineLength * gSineTable[sinIdx]) >> 8);
 
+        if (posIdx == GRAPH_TOUGH || posIdx == GRAPH_BEAUTY)
+            positions[posIdx].y--;
+
+        if (posIdx == GRAPH_SMART || posIdx == GRAPH_CUTE)
+            positions[posIdx].y++;
+        
+        if (posIdx == GRAPH_CUTE || posIdx == GRAPH_BEAUTY || posIdx == GRAPH_SPEED)
+            positions[posIdx].x++;
+
+        if ((posIdx == GRAPH_SMART || posIdx == GRAPH_CUTE) && (lineLength <= 23))
+            positions[posIdx].y--;
+
+        if ((posIdx == GRAPH_TOUGH || posIdx == GRAPH_SMART) && (lineLength <= 8))
+            positions[posIdx].x++;
+
+        if ((posIdx == GRAPH_BEAUTY || posIdx == GRAPH_CUTE) && (lineLength <= 8))
+            positions[posIdx].x--;
     }
 }
 

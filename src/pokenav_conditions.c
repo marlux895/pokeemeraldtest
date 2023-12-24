@@ -501,6 +501,7 @@ static void GetMonConditionGraphData(s16 listId, u8 loadId)
         menu->graph.conditions[loadId][CONDITION_COOL] = GetBoxOrPartyMonData(boxId, monId, MON_DATA_HP_IV, NULL);
         menu->graph.conditions[loadId][CONDITION_TOUGH] = GetBoxOrPartyMonData(boxId, monId, MON_DATA_SPATK_IV, NULL);
         menu->graph.conditions[loadId][CONDITION_SMART] = GetBoxOrPartyMonData(boxId, monId, MON_DATA_SPDEF_IV, NULL);
+        menu->graph.conditions[loadId][CONDITION_SPEED] = GetBoxOrPartyMonData(boxId, monId, MON_DATA_SPEED_IV, NULL);
         menu->graph.conditions[loadId][CONDITION_CUTE] = GetBoxOrPartyMonData(boxId, monId, MON_DATA_DEF_IV, NULL);
         menu->graph.conditions[loadId][CONDITION_BEAUTY] = GetBoxOrPartyMonData(boxId, monId, MON_DATA_ATK_IV, NULL);
         menu->numSparkles[loadId] = GET_NUM_CONDITION_SPARKLES(GetBoxOrPartyMonData(boxId, monId, MON_DATA_SHEEN, NULL));
