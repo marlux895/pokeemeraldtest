@@ -219,6 +219,8 @@
 #define GROWTH_MEDIUM_SLOW  3
 #define GROWTH_FAST         4
 #define GROWTH_SLOW         5
+#define GROWTH_SPIKE        6
+#define GROWTH_UPDATE       7
 
 // Body colors for pokedex search
 #define BODY_COLOR_RED      0
