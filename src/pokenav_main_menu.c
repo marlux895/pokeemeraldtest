@@ -23,7 +23,7 @@ struct Pokenav_MainMenu
     u32 palettes;
     struct Sprite *spinningPokenav;
     struct Sprite *leftHeaderSprites[2];
-    struct Sprite *submenuLeftHeaderSprites[2];
+    struct Sprite *submenuLeftHeaderSprites[3];
     u8 tilemapBuffer[BG_SCREEN_SIZE];
 };
 
@@ -643,7 +643,10 @@ static void CreateLeftHeaderSprites(void)
         menu->leftHeaderSprites[i] = &gSprites[spriteId];
         menu->leftHeaderSprites[i]->invisible = TRUE;
         menu->leftHeaderSprites[i]->x2 = i * 64;
+    }
 
+    for (i = 0; i < 3; i++)
+    {
         // Create submenu left header
         spriteId = CreateSprite(&sSubmenuLeftHeaderSpriteTemplate, 0, 0, 2);
         menu->submenuLeftHeaderSprites[i] = &gSprites[spriteId];
@@ -739,6 +742,9 @@ void SetLeftHeaderSpritesInvisibility(void)
     for (i = 0; i < (s32)ARRAY_COUNT(menu->leftHeaderSprites); i++)
     {
         menu->leftHeaderSprites[i]->invisible = TRUE;
+    }
+        for (i = 0; i < (s32)ARRAY_COUNT(menu->submenuLeftHeaderSprites); i++)
+    {
         menu->submenuLeftHeaderSprites[i]->invisible = TRUE;
     }
 }
